@@ -54,5 +54,5 @@ docker run --rm tree-generator
 
 ## CI
 
-На каждый Pull Request в ветки `main` или `master` запускаются приёмочные тесты (`.github/workflows/ci.yml`).
+На каждый Pull Request в ветки `main` запускаются приёмочные тесты (`.github/workflows/ci.yml`).
 
