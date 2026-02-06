@@ -1,0 +1,32 @@
+# Зависимости
+node_modules/
+# package-lock.json нужен для npm ci в CI — не игнорируем
+
+# Собранные файлы
+dist/
+
+# Тестовые отчёты и результаты
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Временные файлы
+output.txt
+out/
+*.log
+
+# IDE
+.vscode/
+.cursor/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Переменные окружения
+.env
+.env.local
+.env.*.local

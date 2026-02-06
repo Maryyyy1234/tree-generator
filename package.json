@@ -1,0 +1,26 @@
+{
+  "name": "tree-generator",
+  "version": "1.0.0",
+  "description": "Christmas tree text generator (TypeScript + Playwright)",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "tree-generator": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/cli.js",
+    "tree": "tsc && node dist/cli.js",
+    "test": "npm run build && playwright test",
+    "test:acceptance": "playwright test tests/acceptance.spec.ts",
+    "test:debug": "playwright test tests/acceptance.spec.ts --reporter=list --workers=1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
