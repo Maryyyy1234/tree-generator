@@ -1,37 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { spawnSync } from 'node:child_process';
-import { readFileSync, existsSync, unlinkSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { generateTree } from '../dist/index.js';
-
-const CLI_CMD = 'node';
-const CLI_PATH = join(process.cwd(), 'dist/cli.js');
-
-/** Удаляет временный файл после теста. Ошибку удаления не пробрасываем — на результат теста это не влияет. */
-function removeTempFile(path: string): void {
-  try {
-    unlinkSync(path);
-  } catch {
-    // Файл уже удалён или недоступен — не считаем это падением теста
-  }
-}
-
-/** Запускает программу: node dist/cli.js <уровни> <путь>. Можно передать произвольный массив аргументов. */
-function runCli(args: string[]): { status: number | null; stdout: string; stderr: string } {
-  const result = spawnSync(CLI_CMD, [CLI_PATH, ...args], {
-    encoding: 'utf-8',
-    cwd: process.cwd(),
-  });
-  return {
-    status: result.status,
-    stdout: result.stdout ?? '',
-    stderr: result.stderr ?? '',
-  };
-}
+import { removeTempFile, runCli } from './test-helpers.js';
 
 test.describe('Приёмочные тесты генератора ёлки', () => {
-  test('При любом допустимом числе уровней (1–100) ёлка рисуется корректно и сохраняется в файл', async () => {
+  test('Проверка генерации ёлки с допустимыми уровнями отрисовки (1–100)', async () => {
     const iterations = 20;
     for (let i = 0; i < iterations; i++) {
       const levels = Math.floor(Math.random() * 100) + 1;
@@ -49,7 +24,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     }
   });
 
-  test('Уровень 1: только верх (W, *) и ствол, без рядов веток', async () => {
+  test('Проверка генерации ёлки с заданным значением, равным единице (нижняя граница)', async () => {
     const outPath = join(tmpdir(), `tree-1-only-${Date.now()}.txt`);
     const { status, stderr } = runCli(['1', outPath]);
 
@@ -67,7 +42,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     removeTempFile(outPath);
   });
 
-  test('Уровень 0: выводится сообщение, что количество должно быть от 1 до 100', async () => {
+  test('Проверка вывода ошибки при попытке сгенерировать ёлку с нулевым количеством уровней', async () => {
     const outPath = join(tmpdir(), `tree-0-${Date.now()}.txt`);
     const { status, stderr } = runCli(['0', outPath]);
 
@@ -76,7 +51,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     expect(stderr).toContain('Получено');
   });
 
-  test('Уровни < 0 (отрицательное): выводится сообщение, что количество должно быть от 1 до 100', async () => {
+  test('Проверка вывода ошибки при попытке сгенерировать ёлку с отрицательным количеством уровней', async () => {
     const outPath = join(tmpdir(), `tree-neg-${Date.now()}.txt`);
     const { status, stderr } = runCli(['-1', outPath]);
 
@@ -85,7 +60,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     expect(stderr).toContain('Получено');
   });
 
-  test('Уровень 100 (верхняя граница): ёлка рисуется и сохраняется в файл', async () => {
+  test('Проверка генерации ёлки с заданным значением, равным 100 (верхняя граница)', async () => {
     const outPath = join(tmpdir(), `tree-100-${Date.now()}.txt`);
     const { status, stderr } = runCli(['100', outPath]);
 
@@ -97,7 +72,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     removeTempFile(outPath);
   });
 
-  test('Уровни > 100: выводится сообщение, что количество должно быть от 1 до 100', async () => {
+  test('Проверка вывода ошибки при попытке сгенерировать ёлку с количеством уровней, превышающим 100', async () => {
     const outPath = join(tmpdir(), `tree-101-${Date.now()}.txt`);
     const { status, stderr } = runCli(['101', outPath]);
 
@@ -106,7 +81,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     expect(stderr).toContain('Получено');
   });
 
-  test('Некорректные данные (не число): выводится сообщение, что значение должно быть целым числом', async () => {
+  test('Проверка вывода ошибки при попытке сгенерировать ёлку с нецелым значением уровней', async () => {
     const outPath = join(tmpdir(), `tree-nan-${Date.now()}.txt`);
     const { status, stderr } = runCli(['abc', outPath]);
 
@@ -115,7 +90,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     expect(stderr).toContain('Получено');
   });
 
-  test('Неверное расширение файла (не .txt): выводится сообщение, что ожидается .txt', async () => {
+  test('Проверка вывода ошибки при указании неверного расширения файла (не .txt)', async () => {
     const outPath = join(tmpdir(), `tree-${Date.now()}.csv`);
     const { status, stderr } = runCli(['2', outPath]);
 
@@ -123,7 +98,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     expect(stderr).toContain('Ожидается путь к файлу с расширением .txt');
   });
 
-  test('Неверный путь (каталог не существует): выводится сообщение, что каталог не существует', async () => {
+  test('Проверка вывода ошибки при указании неверного пути (каталог не существует)', async () => {
     const outPath = join(tmpdir(), 'несуществующий_каталог_xyz_123', `out-${Date.now()}.txt`);
     const { status, stderr } = runCli(['2', outPath]);
 
@@ -132,7 +107,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     expect(stderr).toContain('Укажите существующий путь к .txt файлу');
   });
 
-  test('Больше двух аргументов: выводится сообщение, что ожидается 2 аргумента', async () => {
+  test('Проверка вывода ошибки при передаче больше двух аргументов', async () => {
     const outPath = join(tmpdir(), `tree-${Date.now()}.txt`);
     const { status, stderr } = runCli(['2', outPath, 'лишний']);
 
@@ -140,7 +115,7 @@ test.describe('Приёмочные тесты генератора ёлки', (
     expect(stderr).toContain('Ожидается 2 аргумента');
   });
 
-  test('Меньше двух аргументов (без аргументов): выводится подсказка об использовании', async () => {
+  test('Проверка вывода ошибки при передаче меньше двух аргументов (без аргументов)', async () => {
     const { status, stderr } = runCli([]);
 
     expect(status).not.toBe(0);

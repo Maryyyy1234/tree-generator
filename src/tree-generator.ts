@@ -60,6 +60,6 @@ export function generateTree(levels: number): string {
 
 function centerLine(line: string, width: number): string {
   const pad = Math.floor((width - line.length) / 2);
-  
+
   return (pad > 0 ? ' '.repeat(pad) : '') + line;
 }
