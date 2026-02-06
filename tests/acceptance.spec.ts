@@ -1,34 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { spawnSync } from 'node:child_process';
-import { readFileSync, existsSync, unlinkSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { generateTree } from '../dist/index.js';
-
-const CLI_CMD = 'node';
-const CLI_PATH = join(process.cwd(), 'dist/cli.js');
-
-/** Удаляет временный файл после теста. Ошибку удаления не пробрасываем — на результат теста это не влияет. */
-function removeTempFile(path: string): void {
-  try {
-    unlinkSync(path);
-  } catch {
-    // Файл уже удалён или недоступен — не считаем это падением теста
-  }
-}
-
-/** Запускает программу: node dist/cli.js <уровни> <путь>. Можно передать произвольный массив аргументов. */
-function runCli(args: string[]): { status: number | null; stdout: string; stderr: string } {
-  const result = spawnSync(CLI_CMD, [CLI_PATH, ...args], {
-    encoding: 'utf-8',
-    cwd: process.cwd(),
-  });
-  return {
-    status: result.status,
-    stdout: result.stdout ?? '',
-    stderr: result.stderr ?? '',
-  };
-}
+import { removeTempFile, runCli } from './test-helpers.js';
 
 test.describe('Приёмочные тесты генератора ёлки', () => {
   test('При любом допустимом числе уровней (1–100) ёлка рисуется корректно и сохраняется в файл', async () => {
